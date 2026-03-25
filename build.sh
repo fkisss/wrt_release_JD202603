@@ -78,6 +78,15 @@ fi
 apply_config
 remove_uhttpd_dependency
 
+# 修复 cups avahi 链接问题：强制 configure 忽略 avahi
+CUPS_MK="$BUILD_DIR/feeds/small8/cups/Makefile"
+if [ -f "$CUPS_MK" ]; then
+    sed -i '/define Build\/Configure/,/endef/ {
+        /--disable-avahi/a\\t\tCONFIGURE_VARS += ac_cv_header_avahi_client_client_h=no
+    }' "$CUPS_MK"
+    echo "已修复 cups avahi 链接问题"
+fi
+
 cd "$BASE_PATH/../$BUILD_DIR"
 make defconfig
 
