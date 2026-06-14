@@ -226,12 +226,24 @@ if [[ -d $TARGET_DIR ]]; then
 fi
 
 make download -j$(($(nproc) * 2))
+
+# ===== FIX: Disable Python 3 PGO optimization to fix test_regression_gh94675 failure =====
+# 禁用 Python 3 的 PGO 优化，避免 test_re 模块中 test_regression_gh94675 测试失败
+echo "[INFO] Disabling Python 3 PGO optimization..."
+if [ -f "feeds/packages/lang/python/python3/Makefile" ]; then
+    sed -i 's/--enable-optimizations/--disable-optimizations/g' feeds/packages/lang/python/python3/Makefile
+    echo "[INFO] Python 3 PGO optimization disabled successfully"
+else
+    echo "[WARN] Python 3 Makefile not found, skipping PGO optimization patch"
+fi
+# ===== END FIX =====
+
 make -j$(($(nproc) + 1)) || make -j1 V=s
 
 FIRMWARE_DIR="$BASE_PATH/../firmware"
 \rm -rf "$FIRMWARE_DIR"
 mkdir -p "$FIRMWARE_DIR"
-find "$TARGET_DIR" -type f \( -name "*.bin" -o -name "*.manifest" -o -name "*efi.img.gz" -o -name "*.itb" -o -name "*.fip" -o -name "*.ubi" -o -name "*rootfs.tar.gz" \) -exec cp -f {} "$FIRMWARE_DIR/" \;
+find "$TARGET_DIR" -type f \( -name "*.bin" -o -name "*.manifest" -o -name "*efi.img.gz" -o -name "*.itb" -o -name "*.fip" -o -name "*.ubi" -o -name "*rootfs.tar.gz" \) -exec cp -f {} "$FIRMWARE_[...]
 \rm -f "$BASE_PATH/../firmware/Packages.manifest" 2>/dev/null
 
 if [[ -d action_build ]]; then
